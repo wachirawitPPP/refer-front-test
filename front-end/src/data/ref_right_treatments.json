@@ -1,0 +1,352 @@
+{
+  "RECORDS": [
+    {
+      "id": 1,
+      "rt_code": "WEL",
+      "rt_name": "สิทธิประกันสุขภาพถ้วนหน้า ประเภทมีสิทธิย่อย",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 2,
+      "rt_code": "UCS",
+      "rt_name": "สิทธิประกันสุขภาพถ้วนหน้า",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 3,
+      "rt_code": "SSS",
+      "rt_name": "สิทธิประกันสังคม",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 4,
+      "rt_code": "OFC",
+      "rt_name": "สิทธิข้าราชการ/สิทธิรัฐวิสาหกิจ",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 5,
+      "rt_code": "LGO",
+      "rt_name": "สิทธิสวัสดิการพนักงานส่วนท้องถิ่น",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 6,
+      "rt_code": "SOF",
+      "rt_name": "สิทธิประกันสังคม/สิทธิข้าราชการ/สิทธิหน่วยงานรัฐ",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 7,
+      "rt_code": "OFL",
+      "rt_name": "สิทธิข้าราชการ/สิทธิหน่วยงานรัฐ/สิทธิสวัสดิการพนักงานส่วนท้องถิ่น",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 8,
+      "rt_code": "SLG",
+      "rt_name": "สิทธิประกันสังคม/สิทธิสวัสดิการพนักงานส่วนท้องถิ่น",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 9,
+      "rt_code": "PVT",
+      "rt_name": "สิทธิครูเอกชน",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 10,
+      "rt_code": "VSS",
+      "rt_name": "สิทธิประกันสังคม/สิทธิทหารผ่านศึก",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 11,
+      "rt_code": "VOF",
+      "rt_name": "สิทธิทหารผ่านศึก/สิทธิข้าราชการ/สิทธิหน่วยงานรัฐ",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 12,
+      "rt_code": "NRD",
+      "rt_name": "สถานะคนต่างด้าว",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 13,
+      "rt_code": "STP",
+      "rt_name": "บุคคลผู้มีปัญหาสถานะและสิทธิ",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 14,
+      "rt_code": "POF",
+      "rt_name": "สิทธิครูเอกชน/สิทธิข้าราชการ/สิทธิหน่วยงานรัฐ",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 15,
+      "rt_code": "OIC",
+      "rt_name": "สิทธิบุคคลทั่วไป (ซื้อประกันสุขภาพ)",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 16,
+      "rt_code": "005",
+      "rt_name": "อื่นๆ (รอยืนยันสิทธิ)",
+      "rt_name_en": "-"
+    },
+    {
+      "id": 17,
+      "rt_code": "BKI",
+      "rt_name": "กรุงเทพประกันภัย",
+      "rt_name_en": "Bangkok Insurance Public Co., Ltd."
+    },
+    {
+      "id": 18,
+      "rt_code": "BHI",
+      "rt_name": "กรุงเทพประกันสุขภาพ",
+      "rt_name_en": "Bangkok Health Insurance Public Company Limited"
+    },
+    {
+      "id": 19,
+      "rt_code": "KPI",
+      "rt_name": "กรุงไทยพานิชประกันภัย",
+      "rt_name_en": "Krungthai Panich Insurance Public Company Limited"
+    },
+    {
+      "id": 20,
+      "rt_code": "RVP",
+      "rt_name": "คุ้มภัยโตเกียวมารีนประกันภัย (ประเทศไทย)",
+      "rt_name_en": "Road Accident Victims Protection Co., Ltd."
+    },
+    {
+      "id": 21,
+      "rt_code": "KWI",
+      "rt_name": "เคดับบลิวไอ ประกันภัย",
+      "rt_name_en": "KWI Insurance Public Company Limmited"
+    },
+    {
+      "id": 22,
+      "rt_code": "KSK",
+      "rt_name": "เคเอสเค ประกันภัย (ประเทศไทย)",
+      "rt_name_en": "KSK Insurance (Thailand) Public Company Limited"
+    },
+    {
+      "id": 23,
+      "rt_code": "PIC",
+      "rt_name": "เจนเนอราลี่ ประกันภัย (ไทยแลนด์)",
+      "rt_name_en": "Generali Insurance (Thailand) Public Company Limited"
+    },
+    {
+      "id": 24,
+      "rt_code": "SMG",
+      "rt_name": "ชับบ์สามัคคีประกันภัย",
+      "rt_name_en": "Chubb Samaggi Insurance Pubic Company Limmited"
+    },
+    {
+      "id": 25,
+      "rt_code": "SOMPO ",
+      "rt_name": "ซมโปะ ประกันภัย (ประเทศไทย)",
+      "rt_name_en": "Sompo Insurance (Thailand) Public Company Limited"
+    },
+    {
+      "id": 26,
+      "rt_code": "CIC",
+      "rt_name": "ซิกน่า ประกันภัย",
+      "rt_name_en": "Cigna Insurance Pubblic Company Limited"
+    },
+    {
+      "id": 27,
+      "rt_code": "DHP",
+      "rt_name": "ทิพยประกันภัย",
+      "rt_name_en": "Dhipaya Insurance Public Co., Ltd."
+    },
+    {
+      "id": 28,
+      "rt_code": "Tune",
+      "rt_name": "ทูนประกันภัย",
+      "rt_name_en": "Tune Insurance Pubic Company Limmited"
+    },
+    {
+      "id": 29,
+      "rt_code": "DVS",
+      "rt_name": "เทเวศประกันภัย",
+      "rt_name_en": "Deves Insurance Public Company Limited"
+    },
+    {
+      "id": 30,
+      "rt_code": "THI",
+      "rt_name": "ไทยประกันสุขภาพ",
+      "rt_name_en": "Thai Health Insurance Public Company Limited"
+    },
+    {
+      "id": 31,
+      "rt_code": "TPI",
+      "rt_name": "ไทยพัฒนาประกันภัย",
+      "rt_name_en": "The Thai United Insurance Public Company Limited"
+    },
+    {
+      "id": 32,
+      "rt_code": "THRE",
+      "rt_name": "ไทยรับประกันภัยต่อ",
+      "rt_name_en": "Thai Reinsurance Public Company Limited (Thailand)"
+    },
+    {
+      "id": 33,
+      "rt_code": "NKI",
+      "rt_name": "นวกิจประกันภัย",
+      "rt_name_en": "Navakij Insurance Public Co.,Ltd."
+    },
+    {
+      "id": 34,
+      "rt_code": "BUN",
+      "rt_name": "บางกอกสหประกันภัย",
+      "rt_name_en": "Bangkok Union Insurance Public Co., Ltd."
+    },
+    {
+      "id": 35,
+      "rt_code": "TVI",
+      "rt_name": "ประกันภัยไทยวิวัฒน์",
+      "rt_name_en": "Thaivivat Insurance Public Co.,Ltd."
+    },
+    {
+      "id": 36,
+      "rt_code": "PCHI",
+      "rt_name": "แปซิฟิค ครอส ประกันสุขภาพ",
+      "rt_name_en": "Pacific Cross Health Insurance Public Company Limited"
+    },
+    {
+      "id": 37,
+      "rt_code": "FCI",
+      "rt_name": "ฟอลคอนประกันภัย",
+      "rt_name_en": "The Falcon Insurance Public Company Limited"
+    },
+    {
+      "id": 38,
+      "rt_code": "MTI",
+      "rt_name": "เมืองไทยประกันภัย",
+      "rt_name_en": "Muang Thai Insurance Public Company Limited"
+    },
+    {
+      "id": 39,
+      "rt_code": "MIT",
+      "rt_name": "มิตรแท้ประกันภัย",
+      "rt_name_en": "Mittare Insurance Public Company Limited"
+    },
+    {
+      "id": 40,
+      "rt_code": "MMF",
+      "rt_name": "มิตซุย สุมิโตโม อินชัวรันส์ สาขาประเทศไทย",
+      "rt_name_en": "Mitsui Sumitomo Insurance Co.,Ltd(Thailand Branch)"
+    },
+    {
+      "id": 41,
+      "rt_code": "VIB",
+      "rt_name": "วิริยะประกันภัย",
+      "rt_name_en": "The Viriyah Insurance Public Company Limited"
+    },
+    {
+      "id": 42,
+      "rt_code": "AYUD",
+      "rt_name": "อลิอันซ์ อยุธยา ประกันภัย",
+      "rt_name_en": "Allianz Ayudhya Assurance Public Company Limited"
+    },
+    {
+      "id": 43,
+      "rt_code": "AIG",
+      "rt_name": "เอไอจี ประกันภัย (ประเทศไทย)",
+      "rt_name_en": "Aig Insurance (Thailand) Public Company Limited"
+    },
+    {
+      "id": 44,
+      "rt_code": "FWD ",
+      "rt_name": "เอฟดับบลิวดีประกันภัย",
+      "rt_name_en": "FWD Life Insurance Public Company Limited"
+    },
+    {
+      "id": 45,
+      "rt_code": "AETNA",
+      "rt_name": "เอ็ทน่า ประกันสุขภาพ (ประเทศไทย)",
+      "rt_name_en": "Aetna Health  Insurance Public Company Limited"
+    },
+    {
+      "id": 46,
+      "rt_code": "MSIG",
+      "rt_name": "เอ็ม เอส ไอ จี ประกันภัย (ประเทศไทย)",
+      "rt_name_en": "Msig Insurance (Thailand) Public Company Limited"
+    },
+    {
+      "id": 47,
+      "rt_code": "AXA",
+      "rt_name": "แอกซ่าประกันภัย",
+      "rt_name_en": "Axa Insurace Public Co., Ltd."
+    },
+    {
+      "id": 48,
+      "rt_code": "LMG",
+      "rt_name": "แอลเอ็มจี ประกันภัย",
+      "rt_name_en": "Lmg Insurance Public Company Limited"
+    },
+    {
+      "id": 49,
+      "rt_code": "WSN",
+      "rt_name": "ไอโออิ กรุงเทพ ประกันภัย",
+      "rt_name_en": "Aioi Bangkok Insurance Public Company Limited"
+    },
+    {
+      "id": 50,
+      "rt_code": "TCAP",
+      "rt_name": "ที ไลฟ์ ประกันชีวิต",
+      "rt_name_en": "T Life Assurance Public Company"
+    },
+    {
+      "id": 51,
+      "rt_code": "PTSL",
+      "rt_name": "พรูเด็นเชียล ประกันชีวิต (ประเทศไทย)",
+      "rt_name_en": "Prudential Life Assurance(Thailand) CO.,LTD"
+    },
+    {
+      "id": 52,
+      "rt_code": "SELIC",
+      "rt_name": "อาคเนย์ประกันชีวิต",
+      "rt_name_en": "Life Insurance Public Company Limited"
+    },
+    {
+      "id": 53,
+      "rt_code": "SMK",
+      "rt_name": "สินมั่นคงประกันภัย จำกัด (มหาชน)",
+      "rt_name_en": "Synmunkong Insurance Public Co., Ltd."
+    },
+    {
+      "id": 54,
+      "rt_code": "AIOIC",
+      "rt_name": "เอซ ไอเอ็นเอ โอเวอร์ซีส์ อินชัวรันซ์",
+      "rt_name_en": "Ace Ina Overseas Insurance Company Ltd.,"
+    },
+    {
+      "id": 55,
+      "rt_code": "TSK",
+      "rt_name": "ไทยเศรษฐกิจประกันภัย",
+      "rt_name_en": "Thai Setakij Insurance Public Co., Td."
+    },
+    {
+      "id": 56,
+      "rt_code": "TNI",
+      "rt_name": "ธนชาตประกันภัย จำกัด (มหาชน)",
+      "rt_name_en": "Thanachart Insurance Public Company Limited"
+    },
+    {
+      "id": 57,
+      "rt_code": "NSI",
+      "rt_name": "นำสินประกันภัย จำกัด (มหาชน)",
+      "rt_name_en": "Nam Seng Insurance (Public) Co., Ltd."
+    },
+    {
+      "id": 58,
+      "rt_code": "IIC",
+      "rt_name": "อินทรประกันภัย จำกัด (มหาชน)",
+      "rt_name_en": "Indara Insurance Public Co., Ltd."
+    }
+  ]
+}
