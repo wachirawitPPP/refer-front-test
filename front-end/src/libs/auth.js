@@ -20,7 +20,7 @@ export const authOptions = {
       async authorize(credentials) {
         
         const { username, password } = credentials
-        console.log({ username, password })
+        // console.log({ username, password })
 
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_TEST_API_URL}/login`, {
@@ -35,7 +35,7 @@ export const authOptions = {
        
 
           if (res.status === 401) {
-            console.log(data.message)
+            // console.log(data.message)
             throw new Error(data.message)
           }
 
@@ -45,8 +45,10 @@ export const authOptions = {
             return {
               id: decodedToken.id,
               name: decodedToken.name,
+              user: decodedToken.user,
               email: decodedToken.email,
               role: decodedToken.role,
+              image: decodedToken.image,
               token: data.token,
               hospitalId: decodedToken.hospitalId,
               exp: decodedToken.exp // Include the token in the returned user object
@@ -77,10 +79,12 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      console.log(user)
+      // console.log(user)
       if (user) {
         token.id = user.id
+        token.image = user.image
         token.name = user.name
+        token.user = user.user
         token.hospitalId = user.hospitalId
         token.role = user.role
         token.token = user.token,
@@ -92,12 +96,14 @@ export const authOptions = {
       if (session.user) {
         session.user.id = token.id
         session.user.name = token.name
+        session.user.user = token.user
+        session.user.image = token.image
         session.user.hospitalId = token.hospitalId
         session.user.role = token.role
         session.user.token = token.token,
         session.user.exp = token.exp // Add the token to the session
       }
-      console.log('session: ', session, 'token: ', token)
+      // console.log('session: ', session, 'token: ', token)
       return session
     }
   }

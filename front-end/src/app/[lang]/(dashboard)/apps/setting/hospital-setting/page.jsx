@@ -2,11 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import { Skeleton } from '@mui/material';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
 
 // Component Imports
 import HospitalForms from '@/views/apps/setting/hospital/hospital-forms';
+import NotFound from '@/views/NotFound';
+import DataNotFound from '@/views/DataNotFound';
+import Loading from '@/views/Loading';
 
 const fetchData = async (token,id) => {
   try {
@@ -53,13 +57,13 @@ const FormLayouts = () => {
     
   }, [status, session]);
 
-  if (loading) return <Typography>Loading...</Typography>;
-  if (error) return <Typography>Error: {error}</Typography>;
+  if (loading) return <Loading />
+  if (error) return <DataNotFound/>
 
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
-        <HospitalForms data={data.data} />
+        <HospitalForms data={data.data} loading={!data.data} />
       </Grid>
     </Grid>
   );

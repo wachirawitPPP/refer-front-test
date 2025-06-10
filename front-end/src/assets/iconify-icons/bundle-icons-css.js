@@ -12,16 +12,22 @@
  */
 import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
-
+import { fileURLToPath } from 'node:url'
+import tablerJson from '@iconify/json/json/tabler.json' with { type: 'json' }
 // Installation: npm install --save-dev @iconify/tools @iconify/utils @iconify/json @iconify/iconify
 import { cleanupSVG, importDirectory, isEmptyColor, parseColors, runSVGO } from '@iconify/tools'
 import { getIcons, getIconsCSS, stringToIcon } from '@iconify/utils'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
 const sources = {
   json: [
     // Iconify JSON file (@iconify/json is a package name, /json/ is directory where files are, then filename)
-    require.resolve('@iconify/json/json/tabler.json')
-
+    // require.resolve('@iconify/json/json/tabler.json')
+    {
+      filename: new URL('@iconify/json/json/tabler.json', import.meta.url).pathname
+    }
     // Custom file with only few icons
     /* {
       filename: require.resolve('@iconify/json/json/line-md.json'),

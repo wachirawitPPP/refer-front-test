@@ -35,6 +35,13 @@
     "O blood group",
     "AB blood group"
   ],
+  "blood_Refer": [
+    "ไม่ระบุ",
+    "A",
+    "B",
+    "O",
+    "AB"
+  ],
   "gender": [
     "ไม่ระบุ",
     "ชาย",

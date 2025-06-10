@@ -13,7 +13,7 @@ import typography from './typography'
 
 
 
-const public_sans = Kanit({ subsets: ['thai'], weight: ['300', '400', '500', '600', '700', '800','900'] })
+const public_sans = Kanit({ subsets: ['latin','thai'], weight: ['300', '400', '500', '600', '700', '800','900'] })
 const public_sans2 = Sarabun({ subsets: ['thai'], weight: ['300', '400', '500', '600', '700', '800'] })
 
 // const font_family = { public_kanit, public_sans}

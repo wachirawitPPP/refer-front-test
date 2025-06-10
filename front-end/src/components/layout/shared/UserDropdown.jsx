@@ -70,11 +70,13 @@ const UserDropdown = () => {
 
   const handleUserLogout = async () => {
     try {
+      // Delete 'refer' cookie by setting it with an expired date
+      document.cookie = 'refer=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
       // Sign out from the app
-      await signOut({ redirect: false })
+      await signOut({ redirect: false }).then(() => { router.push(getLocalizedUrl('/login', locale))})
 
       // Redirect to login page
-      router.push(getLocalizedUrl('/login', locale))
+     
     } catch (error) {
       console.error(error)
 
@@ -128,7 +130,7 @@ const UserDropdown = () => {
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
+                  {/* <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
                     <i className='tabler-user text-[22px]' />
                     <Typography color='text.primary'>My Profile</Typography>
                   </MenuItem>
@@ -143,7 +145,7 @@ const UserDropdown = () => {
                   <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/faq')}>
                     <i className='tabler-help-circle text-[22px]' />
                     <Typography color='text.primary'>FAQ</Typography>
-                  </MenuItem>
+                  </MenuItem> */}
                   <div className='flex items-center plb-2 pli-3'>
                     <Button
                       fullWidth

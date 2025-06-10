@@ -4,6 +4,8 @@ import { useSession } from 'next-auth/react';
 import Grid from '@mui/material/Grid';
 import DepartmentTable from '@/views/apps/setting/department/DepartmentTable';
 import { useState, useEffect } from 'react';
+import DataNotFound from '@/views/DataNotFound';
+import Loading from '@/views/Loading';
 
 const getData = async (hospitalId,token) => {
   try {
@@ -54,11 +56,11 @@ const ReferList1 = () => {
   return (
     <Grid item xs={12}>
       {error ? (
-        <div>{error}</div>
+        <DataNotFound/>
       ) : data ? (
         <DepartmentTable tableData={data.departments} onUpdate={refreshData} />
       ) : (
-        <div>Loading...</div>
+       <Loading/>
       )}
     </Grid>
   );

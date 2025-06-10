@@ -2,6 +2,7 @@
 
 // React Imports
 import { useEffect, useRef } from 'react'
+import { useTheme } from '@mui/material/styles'
 
 // Next Imports
 // import Img from 'next/image'
@@ -29,7 +30,7 @@ const LogoText = styled.span`
   line-height: 1.09091;
   font-weight: 700;
   letter-spacing: 0.25px;
-  color: var(--mui-palette-text-primary);
+  color: var(--mui-palette-primary-main);
   transition: ${({ transitionDuration }) =>
     `margin-inline-start ${transitionDuration}ms ease-in-out, opacity ${transitionDuration}ms ease-in-out`};
 
@@ -68,12 +69,13 @@ const Logo = () => {
   // return <Img src='/next.svg' width={100} height={25} alt='logo' /> // for example
   return (
     <Link href={getLocalizedUrl('/', locale)} className='flex items-center'>
-      <VuexyLogo className='text-2xl text-primary' />
+     
       <LogoText
         ref={logoTextRef}
         isHovered={isHovered}
         isCollapsed={layout === 'collapsed'}
         transitionDuration={transitionDuration}
+        color='primary'
       >
         {themeConfig.templateName}
       </LogoText>

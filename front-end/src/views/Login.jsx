@@ -1,6 +1,6 @@
 'use client'
 
-// React Imports
+// ReactImports
 import { useState } from 'react'
 
 // Next Imports
@@ -39,7 +39,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
-
+import { toast } from 'react-toastify'
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
   zIndex: 2,
@@ -66,10 +66,7 @@ const MaskImg = styled('img')({
 
 const schema = object({
   username: string([minLength(1, 'This field is required')]),
-  password: string([
-    minLength(1, 'This field is required'),
-   
-  ])
+  password: string([minLength(1, 'This field is required')])
 })
 
 const Login = ({ mode }) => {
@@ -80,11 +77,11 @@ const Login = ({ mode }) => {
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
   const lightImg = '/images/pages/auth-mask-light.png'
-  const darkIllustration = '/images/illustrations/auth/v2-login-dark.png'
-  const lightIllustration = '/images/illustrations/auth/v2-login-light.png'
-  const borderedDarkIllustration = '/images/illustrations/auth/v2-login-dark-border.png'
-  const borderedLightIllustration = '/images/illustrations/auth/v2-login-light-border.png'
-
+  const Hospital = '/images/illustrations/auth/img_login.png'
+  const logo1 = '/images/illustrations/auth/สวรส.jpg'
+  const logo2 = '/images/illustrations/auth/taksin.png'
+  const logo3 = '/images/illustrations/auth/snp.png'
+ 
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -101,17 +98,22 @@ const Login = ({ mode }) => {
   } = useForm({
     resolver: valibotResolver(schema),
     defaultValues: {
-      username: 'admin',
-      password: 'iloveapp1212'
+      username: '',
+      password: ''
     }
   })
 
   const characterIllustration = useImageVariant(
     mode,
-    lightIllustration,
-    darkIllustration,
-    borderedLightIllustration,
-    borderedDarkIllustration
+    // lightIllustration,
+    // darkIllustration,
+    // borderedLightIllustration,
+    // borderedDarkIllustration
+    //ems_login,
+    //ems_login,
+    //ems_login_no_background,
+    Hospital,
+    Hospital
   )
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
@@ -125,15 +127,37 @@ const Login = ({ mode }) => {
 
     if (res && res.ok && res.error === null) {
       // Vars
-      const redirectURL = searchParams.get('redirectTo') ?? '/'
 
-      router.push(getLocalizedUrl(redirectURL, locale))
-      window.location.reload();
+      toast.success('เข้าสู่ระบบสำเร็จ', {
+        position: 'top-right',
+        autoClose: 1000, // 5 seconds
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: false
+      })
+      setTimeout(() => {
+        const redirectURL = searchParams.get('redirectTo') ?? '/'
+        window.location.reload()
+        // router.push(getLocalizedUrl(redirectURL, locale))
+      }, 1000)
     } else {
       if (res?.error) {
-        // const error = JSON.parse(res.error)
-
-        // setErrorState(error)
+        if (res.status === 401) {
+          // If credentials are incorrect
+          //alert("Username or Password is incorrect!");
+          toast.warning('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!', {
+            position: 'top-right',
+            autoClose: 2000, // 5 seconds
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: false
+          })
+          return
+        } else {
+          // Other types of errors
+          console.error(res.error)
+          alert('An error occurred. Please try again.')
+        }
 
         console.error(res.error)
         // setErrorState(res.error)
@@ -151,6 +175,7 @@ const Login = ({ mode }) => {
           }
         )}
       >
+        
         <LoginIllustration src={characterIllustration} alt='character-illustration' />
         {!hidden && <MaskImg alt='mask' src={authBackground} />}
       </div>
@@ -158,17 +183,25 @@ const Login = ({ mode }) => {
         <div className='absolute block-start-5 sm:block-start-[33px] inline-start-6 sm:inline-start-[38px]'>
           <Logo />
         </div>
-        <div className='flex flex-col gap-6 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-8 sm:mbs-11 md:mbs-0'>
-          <div className='flex flex-col gap-1'>
-            <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
-            
+        <div className='flex flex-col gap-4 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-8 sm:mbs-11 md:mbs-0'>
+          <div className='flex justify-center'>
+            <img className='auth-illustration' style={{ width: '120px', height: '80px' }} src={logo1} />
+            <img className='auth-illustration' style={{ width: '125px', height: '80px' }} src={logo2} />
+            <img className='auth-illustration' style={{ width: '100px', height: '80px' }} src={logo3} /> 
           </div>
-          <Alert icon={false} className='bg-[var(--mui-palette-primary-lightOpacity)]'>
+          <div>
+            <Typography variant='h4' className='flex  gap-1 justify-center'>{`Seamless Bangkok`}</Typography>
+            <Typography variant='h4' className='flex  gap-1 justify-center'>{`Heart Network`}</Typography>
+          </div>
+          <Typography variant='body4' color='primary'>
+            เข้าสู่ระบบ Seamless Bangkok Heart Newwork
+          </Typography>
+          {/* <Alert icon={false} className='bg-[var(--mui-palette-primary-lightOpacity)]'>
             <Typography variant='body2' color='primary'>
               Username: <span className='font-medium'>admin</span> / Pass:{' '}
               <span className='font-medium'>admin</span>
             </Typography>
-          </Alert>
+          </Alert> */}
           <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
             <Controller
               name='username'
@@ -222,7 +255,7 @@ const Login = ({ mode }) => {
                 />
               )}
             />
-            <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
+            {/* <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox defaultChecked />} label='Remember me' />
               <Typography
                 className='text-end'
@@ -232,7 +265,7 @@ const Login = ({ mode }) => {
               >
                 Forgot password?
               </Typography>
-            </div>
+            </div> */}
             <Button fullWidth variant='contained' type='submit'>
               Login
             </Button>
@@ -242,7 +275,6 @@ const Login = ({ mode }) => {
                 Create an account
               </Typography>
             </div> */}
-           
           </form>
         </div>
       </div>

@@ -114,7 +114,7 @@ const Columns = ({ columnHelper, handleEditClick, handleStatusChange }) =>
         header: 'หน่วยงาน / แผนก',
         cell: ({ row }) => (
           <Typography className="capitalize" color="text.primary">
-            {!null ? row.original.departmentName: 'admin'}
+            {!null ? row.original.departmentName : 'admin'}
           </Typography>
         ),
       }),
@@ -153,7 +153,7 @@ const Columns = ({ columnHelper, handleEditClick, handleStatusChange }) =>
         enableSorting: false,
       }),
     ],
-    [columnHelper, handleEditClick,handleStatusChange]
+    [columnHelper, handleEditClick, handleStatusChange]
   );
 
 const UserSettingTable = ({ tableData, department, onUpdate }) => {
@@ -171,12 +171,12 @@ const UserSettingTable = ({ tableData, department, onUpdate }) => {
   };
   const handleStatusChange = async (user) => {
     setSelectedUser(user);
-    
+
     const data = {
       isActive: !user.isActive
     };
 
-    const response = await axios.put(`${process.env.NEXT_PUBLIC_TEST_API_URL}/user-status/${user.id}`,data, {
+    const response = await axios.put(`${process.env.NEXT_PUBLIC_TEST_API_URL}/user-status/${user.id}`, data, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `${session.user.token}`
@@ -224,7 +224,7 @@ const UserSettingTable = ({ tableData, department, onUpdate }) => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  
+
 
   const handleUserChange = (updatedUser) => {
     setSelectedUser(updatedUser);
@@ -236,7 +236,7 @@ const UserSettingTable = ({ tableData, department, onUpdate }) => {
     } else {
       setData([...data, { ...selectedUser, id: data.length + 1 }]);
     }
-    
+
     setSelectedUser(null);
     setModalOpen(false);
     onUpdate()
@@ -261,28 +261,24 @@ const UserSettingTable = ({ tableData, department, onUpdate }) => {
     <>
       <Card>
         <CardHeader title="Filters" className="pbe-4" />
-        <div className="flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4">
+        <div className="flex justify-between flex-row items-center border-bs p-4 gap-4">
+          <div className="w-full flex flex-col">
+            <TableFilters setData={setData} tableData={tableData} />
+          </div>          
+        </div>
+        <div className='mx-4 flex flex-row items-center'>
+          <p className='justify-items-center'>แสดง</p>
           <CustomTextField
             select
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="is-[70px]"
+            className="sm:w-20 justify-center m-2"
           >
             <MenuItem value="10">10</MenuItem>
             <MenuItem value="25">25</MenuItem>
             <MenuItem value="50">50</MenuItem>
           </CustomTextField>
-          <div className="flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4">
-            <Button
-              color="primary"
-              variant="tonal"
-              startIcon={<i className="tabler-plus" />}
-              className="is-full sm:is-auto"
-              onClick={handleAddClick}
-            >
-              เพิ่มผู้ใช้
-            </Button>
-          </div>
+          <p className='justify-items-center'>รายการ</p>
         </div>
         <div className="overflow-x-auto">
           <table className={tableStyles.table}>
@@ -346,7 +342,7 @@ const UserSettingTable = ({ tableData, department, onUpdate }) => {
           onClose={() => setModalOpen(false)}
           isEdit={isEdit}
           department={department}
-         
+
         />
       )}
     </>

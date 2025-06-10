@@ -3,83 +3,305 @@ import React, { useEffect, useState } from 'react';
 import {
   Grid,
   ListItem,
+  Box
 } from '@mui/material';
 import CustomTextField from '@/@core/components/mui/TextField';
-import CustomAutocomplete from '@core/components/mui/Autocomplete'
-import Typography from '@mui/material/Typography'
+import CustomAutocomplete from '@core/components/mui/Autocomplete';
 
-import optionsData from '@/data/inputSelectOptions.json'
-import provinces from '@/data/thai_provinces.json'
-import amphurs from '@/data/thai_amphures.json'
-import tambons from '@/data/thai_tambons.json'
+import {
+  Avatar,
+  Typography,
+  Button
+} from '@mui/material/';
 
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+
+
+import optionsData from '@/data/inputSelectOptions.json';
+import provinces from '@/data/thai_provinces.json';
+import amphurs from '@/data/thai_amphures.json';
+import tambons from '@/data/thai_tambons.json';
+
+import AppReactDatepicker from '@/libs/styles/AppReactDatepicker';
+import axios from 'axios';
+import { useSession } from 'next-auth/react';
 
 // Third-party Imports
 
-import Avatar from '@mui/material/Avatar'
+import { useDropzone } from 'react-dropzone';
 
-// Third-party Imports
-import { useDropzone } from 'react-dropzone'
+const getHn = async (token) => {
+  try {
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_TEST_API_URL}/generate-hn`, {
+      headers: {
+        'Authorization': `${token}`
+      }
+    });
+    return res.data;
+  } catch (error) {
+    console.error(error)
+    return 'Error generating HN'
+  }
+}
+
+const getHnPrefix = async (token, hospitalId) => {
+  try {
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_TEST_API_URL}/hospital-info/${hospitalId}`, {
+      headers: {
+        'Authorization': `${token}`
+      }
+    });
+
+    return res.data.data.HNCode;
+  } catch (error) {
+    console.error(error);
+    return 'Error generating HN';
+  }
+};
 
 export default function AddNewUser({ formData, setFormData, sendData }) {
+
   // States
-  const [files, setFiles] = useState([])
-  // const [date, setDate] = useState()
-  const [aumphure, setAumphures] = useState([...amphurs])
-  const [tambon, setTambon] = useState([...tambons])
+  const [files, setFiles] = useState([]);
+  const [amphurOptions, setAmphurOptions] = useState([]);
+  const [tambonOptions, setTambonOptions] = useState([]);
   const [email, setEmail] = useState('');
   const [isValidEmail, setIsValidEmail] = useState(true);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValidPhone, setIsValidPhone] = useState(true);
   const [idCard, setIdCard] = useState('');
   const [isValidIdCard, setIsValidIdCard] = useState(true);
-  // console.log(formData)
+  const { data: session, status } = useSession();
+  const [hnPrefix, setHnPrefix] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(formData.file);
+  const [imageUrl, setImageUrl] = useState('');
 
-  useEffect(() => {
-    setFiles[formData.file]
-  }, [setFiles]);
-
-  // Hooks
-  const { getRootProps, getInputProps } = useDropzone({
-    multiple: false,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg']
-    },
-    onDrop: acceptedFiles => {
-      setFiles(acceptedFiles.map(file => Object.assign(file)))
-      setFormData((prevData) => ({
-        ...prevData,
-        file: acceptedFiles.map(file => Object.assign(file)),
-      }))
-    },
-  })
+  const findProvince = (id) => provinces.find(province => province.id === id);
+  const findAmphur = (id) => amphurs.find(amphur => amphur.id === id);
+  const findTambon = (id) => tambons.find(tambon => tambon.id === id);
 
 
-  const renderFilePreview = file => {
-
-    if (file.type.startsWith('image')) {
-      // test edit
-      return <div className="container" onClick={handleRemoveAllFiles}>
-        <img width={100} height={100} alt={file.name} src={URL.createObjectURL(file)} className='testImg' />
-        <div className="middle">
-          <i className='tabler-trash text-[22px] textRemove' style={{ color: 'red' }} />
-        </div>
-      </div>
-      // return <img width={75} height={75} alt={file.name} src={URL.createObjectURL(file)} />
-
-    } else {
-      return <i className='tabler-file-description' />
+  const getImageAuthen =  async (path) =>{
+   
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_TEST_API_URL}/getfileupload`, {
+        params: { file_name: path },
+        headers: {
+          Authorization: `${session.user?.token}`
+        }
+      });
+      console.log(response.data.img)
+      return response.data.img.toString();  // คืนค่า URL ใหม่ที่มีโทเคน
+    } catch (error) {
+      console.error('Fetch image token failed:', error);
+      return path;  // หากมีข้อผิดพลาด ให้ใช้ URL เดิม
     }
   }
 
-  const handleRemoveAllFiles = () => {
-    setFiles([])
+  useEffect(() => {
+    // Fetch the image only when formData.filePath exists
+    if (formData.filePath) {
+      const fetchImage = async () => {
+        const img = await getImageAuthen(formData.filePath, session);
+        setPreviewUrl(img);
+      };
+      fetchImage();
+    }
+  }, [formData.filePath, session]);
+
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const fetchData = async () => {
+        if (session && session.user.token) {
+          try {
+            const hnCode = await getHn(session.user.token);
+            setFormData((prevData) => ({
+              ...prevData,
+              hn: formData.hn ? formData.hn : hnCode.hnCode,
+              province: findProvince(formData.provinceId),
+              amphur: findAmphur(formData.amphurId),
+              tambon: findTambon(formData.tambonId),
+
+            }));
+
+          } catch (error) {
+            console.log(error);
+          }
+
+          try {
+            const prefix = await getHnPrefix(session.user.token, session.user.hospitalId);
+            setHnPrefix(prefix);
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      };
+
+      fetchData();
+    }
+
+    setFiles([formData.file]);
+  }, [status, session, setFormData, formData.hn, formData.file]);
+
+  useEffect(() => {
+    if (formData.province) {
+      const filteredAmphurs = amphurs.filter(item => item.province_id === formData.province.id);
+      setAmphurOptions(filteredAmphurs.map(item => ({
+        id: item.id,
+        title: item.name_th
+      })));
+    } else {
+      setAmphurOptions([]);
+      setFormData(prevData => ({ ...prevData, amphur: null, tambon: null, zipCode: '' }));
+    }
+  }, [formData.province]);
+  useEffect(() => {
+    if (formData.amphur) {
+      const filteredTambons = tambons.filter(item => item.amphure_id === formData.amphur.id);
+      setTambonOptions(filteredTambons.map(item => ({
+        id: item.id,
+        title: item.name_th
+      })));
+    } else {
+      setTambonOptions([]);
+      setFormData(prevData => ({ ...prevData, tambon: null, zipCode: '' }));
+    }
+  }, [formData.amphur]);
+
+  useEffect(() => {
+    if (formData.tambon) {
+      const selectedTambon = tambons.find(item => item.id === formData.tambon.id);
+      setFormData(prevData => ({ ...prevData, zipCode: selectedTambon?.zip_code.toString() || '' }));
+    } else {
+      setFormData(prevData => ({ ...prevData, zipCode: '' }));
+    }
+  }, [formData.tambon]);
+
+  const handleProvinceChange = (event, value) => {
+    setFormData(prevData => ({
+      ...prevData,
+      province: value,
+      amphur: null,
+      tambon: null,
+      zipCode: ''
+    }));
+    if (value) {
+      const filteredAmphurs = amphurs.filter(item => item.province_id === value.id);
+      setAmphurOptions(filteredAmphurs.map(item => ({
+        id: item.id,
+        title: item.name_th
+      })));
+    } else {
+      setAmphurOptions([]);
+      setTambonOptions([]);
+    }
+  };
+  
+  const handleAmphurChange = (event, value) => {
+    setFormData(prevData => ({
+      ...prevData,
+      amphur: value,
+      tambon: null,
+      zipCode: ''
+    }));
+
+    const filteredTambons = tambons.filter(item => item.amphure_id === value.id);
+    setTambonOptions(filteredTambons.map(item => ({
+      id: item.id,
+      title: item.name_th
+    })));
+
+  };
+
+  const handleTambonChange = (event, value) => {
+    setFormData(prevData => ({
+      ...prevData,
+      tambon: value,
+      zipCode: value ? value.zipCode : ''
+    }));
+  };
+
+  // Hooks
+  const { getRootProps, getInputProps, open } = useDropzone({
+    multiple: false,
+    accept: 'image/*',
+    onDrop: acceptedFiles => {
+      const file = acceptedFiles[0];
+      setFiles([file]);
+      setFormData(prevData => ({
+        ...prevData,
+        file: file, // Store the file directly
+      }));
+    },
+    noClick: true, // Prevents the default click behavior of opening the file dialog
+  });
+
+
+
+  const handleUpload = () => {
+    open();
+  }
+
+  const handleEmailChange = (e) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const value = e.target.value;
+    setEmail(value);
+    setIsValidEmail(regex.test(value));
     setFormData((prevData) => ({
       ...prevData,
-      file: [],
-    }))
+      email: regex.test(value) ? value : '',
+    }));
   }
+
+  const handlePhoneNumberChange = (e) => {
+    const regex = /^0\d{8,12}$/;
+    const value = e.target.value;
+    setPhoneNumber(value);
+    setIsValidPhone(regex.test(value));
+    setFormData((prevData) => ({
+      ...prevData,
+      tel: regex.test(value) ? value : '',
+    }));
+  };
+
+  const handleIdCardChange = (e) => {
+    const regex = /^\d{13}$/;
+    const value = e.target.value;
+    setIdCard(value);
+    setIsValidIdCard(regex.test(value));
+    setFormData((prevData) => ({
+      ...prevData,
+      idCardNumber: regex.test(value) ? value : '',
+    }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleAutocompleteChange = (event, value, name) => {
+    setFormData((prevData) => ({ ...prevData, [name]: value ? value.title : '' }));
+  };
+
+  const handleDateChange = (date) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      birthDate: date ? date.toISOString() : '',
+    }));
+  };
+  const handleImageChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFiles(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+      setFormData((prevData) => ({
+        ...prevData,
+        file: selectedFile,
+      }));
+      // uploadImage(selectedFile);
+    }
+  };
 
   const prefixOption = optionsData.prefix.map((item, index) => ({
     id: `${index + 1}`,
@@ -115,133 +337,33 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
     title: item.name_th
   }));
 
-  function onchangeProvince(id, value) {
-    const filteredAumphures = amphurs.filter(item => item.province_id === id);
-    setAumphures(filteredAumphures);
-    setFormData((prevData) => ({
-      ...prevData,
-      province: value,
-      amphur: '',
-      tambon: '',
-      zipCode: '',
-    }))
-  }
 
-  const aumphureOption = aumphure.map((item) => ({
-    id: item.id,
-    title: item.name_th
-  }));
-
-  function onchangeAumphures(id, value) {
-    const filteredTambon = tambons.filter(item => item.amphure_id === id);
-    setTambon(filteredTambon);
-    setFormData((prevData) => ({
-      ...prevData,
-      amphur: value,
-      tambon: '',
-      zipCode: ''
-    }))
-  }
-
-  const tambonOption = tambon.map((item) => ({
-    id: item.id,
-    title: item.name_th
-  }));
-
-  function onchangeTambons(id, value) {
-    const forZipCode = tambons.find(item => item.id === id);
-    setFormData((prevData) => ({
-      ...prevData,
-      tambon: value,
-      zipCode: forZipCode?.zip_code.toString(),
-    }))
-  }
-
-  const handleEmailChange = (e) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const value = e.target.value;
-    setEmail(value);
-    setIsValidEmail(regex.test(value));
-      setFormData((prevData) => ({
-        ...prevData,
-        email: regex.test(value) ? value :'',
-      }));
-  }
-
-  const handlephoneNumberChange = (e) => {
-    const regex = /^0\d{8,12}$/;
-    const value = e.target.value;
-    setPhoneNumber(value);
-    setIsValidPhone(regex.test(value));
-    setFormData((prevData) => ({
-      ...prevData,
-      tel: regex.test(value) ? value :'',
-    }));
-  };
-
-  const handleIdcardChange = (e) => {
-    const regex = /^\d{13}$/;
-    const value = e.target.value;
-    setIdCard(value);
-    setIsValidIdCard(regex.test(value));
-    setFormData((prevData) => ({
-      ...prevData,
-      idCardNumber: regex.test(value) ? value :'',
-    }));
-  };
-  
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
-  const handleAutocompleteChange = (event, value, name) => {
-    setFormData((prevData) => ({ ...prevData, [name]: value ? value.title : '' }));
-  };
-
-  const handleDateChange = (date) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      birthDate: date ? date.toISOString(): '',
-    }));
-    console.log(formData.birthDate)
-  };
 
   return (
-    <Grid container spacing={4} >
+    <Grid container spacing={4}>
       <Grid item xs={12} sm={6} lg={3}>
-        <div style={{ textAlign: 'center' }}>
-          {files.length ? (
-            <>
-              <Grid container justifyContent="center" alignItems="center">
-                {files.map(file => (
-                  <Grid item xs={12} key={file.name}>
-                    <ListItem style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div className='file-details' style={{ textAlign: 'center' }}>
-                        <div className='file-preview' >{renderFilePreview(file)}</div>
-                        {/* <Button color='error' variant='outlined' onClick={handleRemoveAllFiles}>
-                          Remove
-                        </Button> */}
-                      </div>
-                    </ListItem>
-                  </Grid>
-                ))}
-              </Grid>
-            </>
-          ) :
-            <div {...getRootProps({ className: 'dropzone' })}>
-              <input {...getInputProps()} />
-              <div className='flex items-center flex-col'>
-                <Avatar variant='rounded' className='bs-12 is-12 mbe-9'>
-                  <i className='tabler-upload' />
-                </Avatar>
-                <Typography>Allowed *.jpeg, *.jpg, *.png </Typography>
-              </div>
-            </div>
-          }
-
-        </div>
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+          <Avatar
+            variant="rounded"
+            src={previewUrl}
+            alt={formData.firstnameTH}
+            sx={{ width: 120, height: 120, mb: 3 }}
+          />
+          <Button
+            variant="contained"
+            component="label"
+            size="small"
+          // sx={{ width: 100, height: 50 }}
+          >
+            อัปโหลดรูปภาพ
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </Button>
+        </Box>
       </Grid>
       <Grid item xs={12} sm={6} lg={3} className='space-y-3'>
         <CustomAutocomplete
@@ -320,18 +442,17 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
           value={maritalOption.find(option => option.title === formData.maritalOptions) || null}
           onChange={(event, value) => handleAutocompleteChange(event, value, 'maritalOptions')}
           isOptionEqualToValue={(option, value) => option.id === value?.id}
-
           renderInput={params => <CustomTextField placeholder='สถานะภาพสมรส' {...params} label='สถานะภาพสมรส' required error={!formData.maritalOptions && sendData} />}
         />
       </Grid>
 
       <Grid item xs={12} sm={6} lg={3}>
-        <CustomTextField name='idCardNumber' value={isValidIdCard ? formData.idCardNumber : idCard} fullWidth label='เลขบัตรประชาชน' placeholder='เลขบัตรประชาชน' onChange={handleIdcardChange} required error={!formData.idCardNumber && sendData} />
-        {!isValidIdCard && idCard&& (
+        <CustomTextField name='idCardNumber' value={isValidIdCard ? formData.idCardNumber : idCard} fullWidth label='เลขบัตรประชาชน' placeholder='เลขบัตรประชาชน' onChange={handleIdCardChange} required error={!formData.idCardNumber && sendData} />
+        {!isValidIdCard && idCard && (
           <span style={{ color: 'red' }}>กรุณากรอกเลขบัตรประชาชนที่ถูกต้อง!</span>
         )}
       </Grid>
-      
+
       <Grid item xs={12} sm={6} lg={3}>
         <CustomTextField name='passportNumber' value={formData.passportNumber || ''} fullWidth label='หนังสือเดินทาง' placeholder='หนังสือเดินทาง' onChange={handleChange} />
       </Grid>
@@ -353,7 +474,6 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
           selected={formData.birthDate}
           id='birthDate-input'
           onChange={handleDateChange}
-          // dateFormat='dd/MM/YYYY'
           showYearDropdown
           showMonthDropdown
           placeholderText='วันเกิด'
@@ -363,7 +483,10 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
         />
       </Grid>
       <Grid item xs={12} sm={6} lg={3}>
-        <CustomTextField fullWidth label='รหัส HN' placeholder='รหัส HN' name='hn' required onChange={handleChange} value={formData.hn || ''} error={!formData.hn && sendData} />
+        <CustomTextField disabled fullWidth label='รหัส HN' placeholder='รหัส HN' name='hn' required onChange={handleChange} value={hnPrefix + formData.hn || ''} error={!formData.hn && sendData} />
+      </Grid>
+      <Grid item xs={12} sm={6} lg={3}>
+        <CustomTextField disabled fullWidth label='รหัส HN เดิม' placeholder='รหัส HN' name='hn' />
       </Grid>
 
       <Grid item xs={12} sm={6} lg={3}>
@@ -391,8 +514,8 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
         )}
       </Grid>
       <Grid item xs={12} sm={6} lg={3}>
-        <CustomTextField fullWidth label='เบอร์โทรศัพท์' placeholder='เบอร์โทร' name='tel' onChange={handlephoneNumberChange} value={isValidPhone ? formData.tel : phoneNumber} />
-        {!isValidPhone && phoneNumber&& (
+        <CustomTextField fullWidth label='เบอร์โทรศัพท์' placeholder='เบอร์โทร' name='tel' onChange={handlePhoneNumberChange} value={isValidPhone ? formData.tel : phoneNumber} />
+        {!isValidPhone && phoneNumber && (
           <span style={{ color: 'red' }}>กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง!</span>
         )}
       </Grid>
@@ -403,53 +526,36 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
       <Grid item xs={12} sm={6} lg={3}>
         <CustomAutocomplete
           fullWidth
-          disableClearable={true}
           options={provinceOption}
-          onChange={(event, value) => onchangeProvince(value.id, value.title)}
-          id='provinceOption'
-          name='province'
-          getOptionLabel={(option) => option.title || ''}
-          value={provinceOption.find(option => option.title === formData.province) || null}
+          value={provinceOption.find(option => option.id === formData.province?.id) || null}
+          onChange={handleProvinceChange}
+          getOptionLabel={option => option.title}
           isOptionEqualToValue={(option, value) => option.id === value?.id}
-          renderInput={(params) => (
-            <CustomTextField
-              {...params}
-              placeholder='จังหวัด'
-              label='จังหวัด'
-              required
-              error={!formData.province && sendData}
-            />
-          )}
+          renderInput={(params) => <CustomTextField {...params} placeholder='จังหวัด' label='จังหวัด' />}
         />
       </Grid>
       <Grid item xs={12} sm={6} lg={3}>
         <CustomAutocomplete
           fullWidth
-          disableClearable={true}
-          options={aumphureOption}
-          onChange={(event, value) => onchangeAumphures(value.id, value.title)}
-          id='aumphureOption'
-          name='amphur'
-          getOptionLabel={option => option.title || ''}
+          options={amphurOptions}
+          value={amphurOptions.find(option => option.id === formData.amphur?.id) || null}
+          onChange={handleAmphurChange}
+          getOptionLabel={option => option.title}
+          isOptionEqualToValue={(option, value) => option.id === value?.id}
+          renderInput={(params) => <CustomTextField {...params} placeholder='อำเภอ' label='อำเภอ' />}
           disabled={!formData.province}
-          value={aumphureOption.find(option => option.title === formData.amphur) || null}
-          isOptionEqualToValue={(option, value) => option.id === value?.id}
-          renderInput={params => <CustomTextField placeholder={formData.amphur || 'อำเภอ'} {...params} label='อำเภอ' required error={!formData.amphur && sendData} />}
         />
       </Grid>
       <Grid item xs={12} sm={6} lg={3}>
         <CustomAutocomplete
           fullWidth
-          disableClearable={true}
-          onChange={(event, value) => onchangeTambons(value.id, value.title)}
-          options={tambonOption}
-          disabled={!formData.amphur}
-          id='tambonOption'
-          name='tambon'
-          getOptionLabel={option => option.title || ''}
-          value={tambonOption.find(option => option.title === formData.tambon) || null}
+          options={tambonOptions}
+          value={tambonOptions.find(option => option.id === formData.tambon?.id) || null}
+          onChange={handleTambonChange}
+          getOptionLabel={option => option.title}
           isOptionEqualToValue={(option, value) => option.id === value?.id}
-          renderInput={params => <CustomTextField placeholder={formData.tambon || 'ตำบล'} {...params} label='ตำบล' required error={!formData.tambon && sendData} />}
+          renderInput={(params) => <CustomTextField {...params} placeholder='ตำบล' label='ตำบล' />}
+          disabled={!formData.amphur}
         />
       </Grid>
       <Grid item xs={12} sm={6} lg={3}>
@@ -459,6 +565,5 @@ export default function AddNewUser({ formData, setFormData, sendData }) {
         <CustomTextField name='note' fullWidth label='หมายเหตุ' placeholder='หมายเหตุ' onChange={handleChange} value={formData.note || ''} />
       </Grid>
     </Grid>
-
-  )
+  );
 }

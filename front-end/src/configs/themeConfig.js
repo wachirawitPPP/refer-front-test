@@ -16,9 +16,9 @@
  * Another way is to clear the cookie from the browser's Application/Storage tab and then reload the page.
  */
 const themeConfig = {
-  templateName: 'Aps TH',
+  templateName: 'Heart Networks',
   settingsCookieName: 'vuexy-mui-next-demo-1',
-  mode: 'system', // 'system', 'light', 'dark'
+  mode: 'light', // 'system', 'light', 'dark'
   skin: 'default', // 'default', 'bordered'
   semiDark: false, // true, false
   layout: 'horizontal', // 'vertical', 'collapsed', 'horizontal'

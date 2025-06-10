@@ -25,9 +25,10 @@ import amphurs from '@/data/thai_amphures.json'
 import tambons from '@/data/thai_tambons.json'
 import axios from 'axios';
 import { useSession } from 'next-auth/react'
+import { Form } from 'react-hook-form'
 
 
-const HospitalForms = ({ data }) => {
+const HospitalForms = ({ data,loading }) => {
 
   const findProvince = (id) => provinces.find(province => province.id === id);
   const findAmphur = (id) => amphurs.find(amphur => amphur.id === id);
@@ -46,9 +47,10 @@ const HospitalForms = ({ data }) => {
     liscenseNumber: data.licenseNumber,
     hospitalCode: data.hospitalCode,
     address: data.address,
-    image: data.url,
+    image: data.image,
     referCode: data.referCode,
-    HNcode: data.HNcode,
+    HNCode: data.HNCode,
+    filePath: data.filePath,
   });
 
   const [errors, setErrors] = useState({
@@ -64,11 +66,12 @@ const HospitalForms = ({ data }) => {
     hospitalCode: false,
     address: false,
     referCode: false,
-    HNcode: false,
+    HNCode: false,
   });
 
   const [amphurOptions, setAmphurOptions] = useState([]);
   const [tambonOptions, setTambonOptions] = useState([]);
+  const [file, setFile] = useState([]);
   const { data: session, status } = useSession();
 
   const provinceOptions = provinces.map((item) => ({
@@ -92,7 +95,7 @@ const HospitalForms = ({ data }) => {
       hospitalCode: !formData.hospitalCode,
       address: !formData.address,
       referCode: !formData.referCode,
-      HNcode: !formData.HNcode,
+      HNCode: !formData.HNCode,
     };
     setErrors(tempErrors);
     return Object.values(tempErrors).every(x => !x);
@@ -100,13 +103,15 @@ const HospitalForms = ({ data }) => {
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
+    console.log(file)
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prevFormData => ({ ...prevFormData, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
+
+      setFormData(prevFormData => ({ ...prevFormData, image: file }));
+
+
     }
+
+    console.log(formData.image);
   };
 
   const handleProvinceChange = (event, value) => {
@@ -155,32 +160,67 @@ const HospitalForms = ({ data }) => {
     }));
   };
 
+  const uploadImage = async (imagePath, file, token) => {
+    const avatar = new FormData();
+    avatar.append('avatar', file);
+    avatar.append('path', imagePath);
+    avatar.append('s3Path','user')
+
+    console.log(avatar);
+
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_TEST_API_URL}/upload`, avatar, {
+      headers: {
+        'Authorization': `${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     const finalForm = {
-      
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        province: formData.province.title,
-        provinceId: formData.province.id,
-        amphur: formData.amphur.title,
-        amphurId: formData.amphur.id,
-        tambon: formData.tambon.title,
-        tambonId: formData.tambon.id,
-        zipCode: formData.zipCode,
-        serviceDesc: formData.serviceDesc,
-        licenseNumber: formData.liscenseNumber,
-        hospitalCode: formData.hospitalCode,
-        address: formData.address,
-        image: formData.image,
-        referCode: formData.referCode,
-        HNcode: formData.HNcode,
-      
+
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      province: formData.province.title,
+      provinceId: formData.province.id,
+      amphur: formData.amphur.title,
+      amphurId: formData.amphur.id,
+      tambon: formData.tambon.title,
+      tambonId: formData.tambon.id,
+      zipCode: formData.zipCode,
+      serviceDesc: formData.serviceDesc,
+      licenseNumber: formData.liscenseNumber,
+      hospitalCode: formData.hospitalCode,
+      address: formData.address,
+      image: formData.image,
+      referCode: formData.referCode,
+      HNCode: formData.HNCode,
+      filePath:''
+
     };
     console.log(finalForm)
+
+    if (formData.image instanceof File) {
+      try {
+        const image = await uploadImage(formData.filePath, formData.image, session.user.token)
+        console.log(image)
+        finalForm.image = image.data.authUrl
+        finalForm.filePath = image.data.fileUrl;
+
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to upload image');
+        
+        return;
+      }
+
+    }
+
 
     try {
       await axios.put(`${process.env.NEXT_PUBLIC_TEST_API_URL}/hospital-info/${session.user.hospitalId}`, finalForm, {
@@ -249,7 +289,7 @@ const HospitalForms = ({ data }) => {
             </Grid>
             <Grid item xs={12} display="flex" justifyContent="center">
               <Avatar
-                src='https://thethaiger.com/wp-content/uploads/2022/06/Screenshot-2024-01-31-153119.jpg'
+                src={data.image}
                 alt={data.name}
                 sx={{ width: 100, height: 100 }}
               />
@@ -388,13 +428,13 @@ const HospitalForms = ({ data }) => {
             <Grid item xs={12} sm={4} lg={2.4}>
               <CustomTextField
                 fullWidth
-                error={errors.HNcode}
+                error={errors.HNCode}
                 label='HN Code'
-                value={formData.HNcode}
+                value={formData.HNCode}
                 placeholder='HN Code'
-                onChange={e => setFormData({ ...formData, HNcode: e.target.value })}
+                onChange={e => setFormData({ ...formData, HNCode: e.target.value })}
               />
-              <p className='mt-1'>ตัวอย่าง HN code: {formData.HNcode}00000</p>
+              <p className='mt-1'>ตัวอย่าง HN code: {formData.HNCode}00000</p>
             </Grid>
             <Grid item xs={12} sm={4} lg={2.4}>
               <CustomTextField

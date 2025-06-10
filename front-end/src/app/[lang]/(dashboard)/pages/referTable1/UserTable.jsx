@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import {
@@ -23,11 +23,8 @@ import {
   getCoreRowModel,
   useReactTable,
   getFilteredRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFacetedMinMaxValues,
   getPaginationRowModel,
-  getSortedRowModel
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import TablePaginationComponent from '@components/TablePaginationComponent';
 import CustomTextField from '@core/components/mui/TextField';
@@ -39,15 +36,18 @@ import Link from 'next/link';
 import { rankItem } from '@tanstack/match-sorter-utils';
 import classnames from 'classnames';
 import { useParams } from 'next/navigation';
+import TableFilters from './TableFilters';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-// Filter Function
+import { useSession } from 'next-auth/react';
+
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value);
   addMeta({ itemRank });
   return itemRank.passed;
 };
 
-// Debounced Input Component
 const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...props }) => {
   const [value, setValue] = useState(initialValue);
 
@@ -66,85 +66,92 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />;
 };
 
-// Column Definitions
 const columnHelper = createColumnHelper();
 
 const userStatusObj = {
   active: 'success',
-  inactive: 'secondary'
+  inactive: 'secondary',
 };
 
-const getAvatar = ({ avatar, fullName }) => {
-  if (avatar) {
-    return <CustomAvatar src={avatar} size={34} />;
-  } else {
-    return <CustomAvatar size={34}>{getInitials(fullName)}</CustomAvatar>;
+const getImageAuthen =  async (path,token) =>{
+  try {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_TEST_API_URL}/getfileupload`, {
+      params: { file_name: path },
+      headers: {
+        Authorization: `${token}`
+      }
+    });
+    console.log(response.data.img)
+    return response.data.img.toString();  // คืนค่า URL ใหม่ที่มีโทเคน
+  } catch (error) {
+    console.error('Fetch image token failed:', error);
+    return path;  // หากมีข้อผิดพลาด ให้ใช้ URL เดิม
   }
+}
+const GetAvatar = ({ avatar, fullName }) => {
+  const { data: session } = useSession();  // Using useSession hook inside a component
+  const [avatarUrl, setAvatarUrl] = useState(null);  // Using useState hook inside a component
+
+  useEffect(() => {
+    if (avatar) {
+      // Fetch the image URL asynchronously
+      const fetchImage = async () => {
+        const imgUrl = await getImageAuthen(avatar, session?.user?.token);
+        setAvatarUrl(imgUrl); // Set the URL in state
+      };
+      fetchImage();
+    }
+  }, [avatar, session]);  // Dependencies for useEffect
+
+  return avatarUrl ? (
+    <CustomAvatar src={avatarUrl} size={34} />
+  ) : (
+    <CustomAvatar size={34}>{getInitials(fullName)}</CustomAvatar>
+  );
 };
 
-const Columns = ({ columnHelper, locale, handleClickChangeStatus, forEditModal }) => useMemo(() => [
+
+
+const columnsDefinition = (columnHelper, locale, handleClickChangeStatus, forEditModal, hnPrefix) => [
   {
     header: 'id',
-    cell: ({ row }) => (
-      row.original.id
-    )
+    cell: ({ row }) => row.original.id,
   },
-  
   columnHelper.accessor('name', {
     header: 'ชื่อ-นามสกุล',
     cell: ({ row }) => (
       <div className='flex items-center gap-4'>
-        {getAvatar({ avatar: row.original.avatar, fullName: row.original.firstnameEN })}
+        {GetAvatar({ avatar: row.original.filePath , fullName: row.original.firstnameEN })}
         <div className='flex flex-col'>
-          <Link href={`referTable2/${row.original.id}`}>
-            <Typography color='text.primary' className='font-medium'>
+          <Link href={`referTable2/${row.original.id}?id_card=${row.original.idCardNumber}`}>
+            <Typography color='primary' className='font-medium'>
               {row.original.firstnameTH + ' ' + row.original.lastnameTH}
             </Typography>
-            <Typography className='font-small'>
-              {row.original.hn}
-            </Typography>
+            <Typography className='font-small'>{row.original.hn}</Typography>
           </Link>
         </div>
       </div>
-    )
+    ),
   }),
   {
     header: 'เพศ',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-4'>
-        {row.original.gender}
-      </div>
-    )
+    cell: ({ row }) => <div className='flex items-center gap-4'>{row.original.gender}</div>,
   },
   {
     header: 'สัญชาติ',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-4'>
-        {row.original.nationality}
-      </div>
-    )
+    cell: ({ row }) => <div className='flex items-center gap-4'>{row.original.nationality}</div>,
   },
   {
     header: 'โทร',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-4'>
-        {row.original.tel}
-      </div>
-    )
+    cell: ({ row }) => <div className='flex items-center gap-4'>{row.original.tel}</div>,
   },
-  
   {
     header: 'สร้างเมื่อ',
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
       const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-
-      return (
-        <div className='flex items-center gap-4'>
-          {formattedDate}
-        </div>
-      );
-    }
+      return <div className='flex items-center gap-4'>{formattedDate}</div>;
+    },
   },
   {
     header: 'สถานะ',
@@ -152,18 +159,14 @@ const Columns = ({ columnHelper, locale, handleClickChangeStatus, forEditModal }
       <div className='flex items-center gap-3'>
         <Chip color={row.original.isActive ? 'success' : 'error'} variant="tonal" className="capitalize" label={row.original.isActive ? 'ปกติ' : 'ระงับ'} size="small" />
       </div>
-    )
+    ),
   },
   {
     id: 'Action',
-    header: () => (
-      <div style={{ width: '100%', textAlign: 'center' }}>
-        Action
-      </div>
-    ),
+    header: () => <div style={{ width: '100%', textAlign: 'center' }}>Action</div>,
     cell: ({ row }) => (
       <div style={{ width: '100%', textAlign: 'center' }}>
-        <Link href={`referTable2/${row.original.id}`}>
+        <Link href={`referTable2/${row.original.id}?id_card=${row.original.idCardNumber}`}>
           <Tooltip title="ดูข้อมูล">
             <IconButton>
               <i data-bs-toggle="modal" className='tabler-eye text-[22px] text-textSecondary' />
@@ -175,29 +178,21 @@ const Columns = ({ columnHelper, locale, handleClickChangeStatus, forEditModal }
             <i data-bs-toggle="modal" className='tabler-edit text-[22px] text-textSecondary' />
           </IconButton>
         </Tooltip>
-        {row.original.status === 'active' ?
-          <Tooltip title="ระงับผู้ใช้งาน">
-            <IconButton onClick={() => handleClickChangeStatus(row.original.id, row.original.status)}>
-              <i data-bs-toggle="modal" className='tabler-trash text-[22px] text-textSecondary' />
-            </IconButton>
-          </Tooltip>
-          :
-          <Tooltip title="เปิดสิทธิ์ใช้งาน">
-            <IconButton onClick={() => handleClickChangeStatus(row.original.id, row.original.status)}>
-              <i data-bs-toggle="modal" className='tabler-plus text-[22px] text-textSecondary' />
-            </IconButton>
-          </Tooltip>
-        }
+        <Tooltip title={row.original.isActive ? "ระงับผู้ใช้งาน" : "เปิดสิทธิ์ใช้งาน"}>
+          <IconButton onClick={() => handleClickChangeStatus(row.original.id, row.original.isActive)}>
+            <i data-bs-toggle="modal" className={`tabler-${row.original.isActive ? 'trash' : 'plus'} text-[22px] text-textSecondary`} />
+          </IconButton>
+        </Tooltip>
       </div>
     ),
-  }
-], [columnHelper, locale])
+  },
+];
 
-const UserTable = ({ tableData, onUpdate }) => {
+const UserTable = ({ tableData, onUpdate, hnPrefix, userSession }) => {
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState(tableData);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(null);
   const [isModalOpenAddUser, setModalOpenAddUser] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -219,18 +214,21 @@ const UserTable = ({ tableData, onUpdate }) => {
   };
 
   const handleClose = () => setOpen(false);
-  const handleSuspend = () => {
-    setData((prevData) =>
-      prevData.map((row) =>
-        row.id === selectedRowId
-          ? { ...row, status: row.status === 'active' ? 'inactive' : 'active' }
-          : row
-      )
-    );
-    handleClose();
+
+  const handleSuspend = async () => {
+    try {
+      await axios.patch(`${process.env.NEXT_PUBLIC_TEST_API_URL}/customer/${selectedRowId}/active`, { isActive: !dataStatus }, {
+        headers: { Authorization: `${userSession.token}` },
+      });
+      onUpdate();
+      toast.success('บันทึกข้อมูลสำเร็จ');
+      handleClose();
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
-  const handleCreate = (user) =>{
+  const handleCreate = (user) => {
     setSelectedUserData(user);
     setModalTitle('เพิ่มข้อมูลลูกค้า');
     setModalOpenAddUser(true);
@@ -239,12 +237,12 @@ const UserTable = ({ tableData, onUpdate }) => {
 
   const forEditModal = (user) => {
     setSelectedUserData(user);
-    setModalTitle('แก้ไขข้อมูลคนไข้ ID : ' + user.id);
+    setModalTitle(`แก้ไขข้อมูลคนไข้: ${user.firstnameTH} ${user.lastnameTH} (${hnPrefix}${user.hn})`);
     setModalOpenAddUser(true);
     setIsCreate(false);
   };
 
-  const columns = Columns({ columnHelper, locale, handleClickChangeStatus, forEditModal });
+  const columns = useMemo(() => columnsDefinition(columnHelper, locale, handleClickChangeStatus, forEditModal, hnPrefix), [columnHelper, locale, hnPrefix]);
 
   const table = useReactTable({
     data,
@@ -260,9 +258,6 @@ const UserTable = ({ tableData, onUpdate }) => {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getFacetedMinMaxValues: getFacetedMinMaxValues()
   });
 
   const forAddModal = () => {
@@ -274,44 +269,42 @@ const UserTable = ({ tableData, onUpdate }) => {
   return (
     <>
       <Card>
-        <CardHeader title='ข้อมูลคนไข้' className='pbe-4' />
-        <div className='flex justify-end flex-col items-start w-full md:flex-row md:items-center p-6 border-bs gap-4'>
-          <div className='flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4'>
-            <CustomTextField
-              select
-              className='w-full sm:w-auto'
-              value={table.getState().pagination.pageSize}
-              onChange={e => table.setPageSize(Number(e.target.value))}
-            >
-              <MenuItem value='10'>10</MenuItem>
-              <MenuItem value='25'>25</MenuItem>
-              <MenuItem value='50'>50</MenuItem>
-            </CustomTextField>
-            <CustomTextField
-              select
-              className='w-full sm:w-auto'
-              id='select-status'
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              SelectProps={{ displayEmpty: true }}
-            >
-              <MenuItem value=''>Select Status</MenuItem>
-              <MenuItem value='active'>Active</MenuItem>
-              <MenuItem value='inactive'>Inactive</MenuItem>
-            </CustomTextField>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='ค้นหาชื่อ-สกุล'
-              className='is-full sm:is-auto'
-            />
+        <CardHeader title='ข้อมูลคนไข้' className='pb-4' />
+        <div className="flex justify-between flex-row items-center border-bs p-4 gap-4">
+          <div className="w-full flex flex-col">
+            <TableFilters setData={setData} tableData={tableData} />
+          </div>
+
+          {/* <DebouncedInput
+            value={globalFilter ?? ''}
+            onChange={value => setGlobalFilter(String(value))}
+            placeholder='ค้นหาชื่อ-สกุล'
+            className='is-full sm:is-auto'
+          /> */}
+          
+        </div>
+        <div className='mx-4  mb-2 flex flex-row items-center'>
+          {/* <p className='justify-items-center'>แสดง</p>
+          <CustomTextField
+            select
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            className="sm:w-20 justify-center m-2"
+          >
+            <MenuItem value="10">10</MenuItem>
+            <MenuItem value="25">25</MenuItem>
+            <MenuItem value="50">50</MenuItem>
+          </CustomTextField>
+          <p className='justify-items-center'>รายการ</p> */}
+          <div className="w-full flex justify-end mx-4">
             <Button
-              variant='contained'
+              color="primary"
+              variant="tonal"
               startIcon={<i className='tabler-plus' />}
               onClick={handleCreate}
-              className='is-full sm:is-auto'
+
             >
-              เพิ่มลูกค้า
+              เพิ่มคนไข้ใหม่
             </Button>
           </div>
         </div>
@@ -326,14 +319,14 @@ const UserTable = ({ tableData, onUpdate }) => {
                         <div
                           className={classnames({
                             'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
+                            'cursor-pointer select-none': header.column.getCanSort(),
                           })}
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
                             asc: <i className='tabler-chevron-up text-xl' />,
-                            desc: <i className='tabler-chevron-down text-xl' />
+                            desc: <i className='tabler-chevron-down text-xl' />,
                           }[header.column.getIsSorted()] ?? null}
                         </div>
                       )}
@@ -393,15 +386,9 @@ const UserTable = ({ tableData, onUpdate }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions className='dialog-actions-dense'>
-          {dataStatus === 'active' ?
-            <Button onClick={handleSuspend} variant="outlined" color="error" className='mt-3'>
-              ระงับการใช้งาน
-            </Button>
-            :
-            <Button onClick={handleSuspend} variant="outlined" color="primary" className='mt-3'>
-              เปิดสิทธิ์ใช้งาน
-            </Button>
-          }
+          <Button onClick={handleSuspend} variant="outlined" color={dataStatus ? "error" : "primary"} className='mt-3'>
+            {dataStatus ? 'ระงับการใช้งาน' : 'เปิดสิทธิ์ใช้งาน'}
+          </Button>
           <Button onClick={handleClose} variant="outlined" color="secondary" className='mt-3'>
             ยกเลิก
           </Button>

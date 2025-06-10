@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import UserSettingTable from '@/views/apps/setting/user/UserSettingTable';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
+import DataNotFound from '@/views/DataNotFound';
+import Loading from '@/views/Loading';
 
 const fetchDepartment = async (token, hospitalId) => {
   try {
@@ -66,8 +68,8 @@ const ReferList1 = () => {
     }
   }, [status, session]);
 
-  if (loading) return <UserSettingTable tableData={[]}  />;
-  if (error) return <Typography>Error: {error}</Typography>;
+  if (loading) return <Loading/>;
+  if (error) return <DataNotFound/>;
 
   return (
     <Grid item xs={12}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -10,11 +10,12 @@ import {
   MenuItem,
   Autocomplete,
   TextField
-} from '@mui/material';
-import axios from 'axios';
-import CustomTextField from '@core/components/mui/TextField';
+} from '@mui/material'
+import axios from 'axios'
+import CustomTextField from '@core/components/mui/TextField'
 import CustomAutocomplete from '@core/components/mui/Autocomplete'
-import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react'
+import { toast, Flip } from 'react-toastify'
 
 const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit, department }) => {
   const initialFormData = {
@@ -24,12 +25,13 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
     role: '',
     departmentId: '',
     password: '',
-    image: '',
-    imageFile: null
-  };
+    image: null,
+    imageFile: null,
+    filePath: ''
+  }
 
-  const { data: session } = useSession();
-  const [formData, setFormData] = useState(initialFormData);
+  const { data: session } = useSession()
+  const [formData, setFormData] = useState(initialFormData)
   const [errors, setErrors] = useState({
     username: false,
     name: false,
@@ -37,7 +39,7 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
     role: false,
     department: false,
     password: false
-  });
+  })
 
   useEffect(() => {
     if (open) {
@@ -48,34 +50,31 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
         role: false,
         department: false,
         password: false
-      });
+      })
 
       if (isEdit) {
         setFormData({
           ...user,
           password: '', // reset password field when editing
           imageFile: null
-        });
+        })
       } else {
-        setFormData(initialFormData);
+        setFormData(initialFormData)
       }
     }
-  }, [open, isEdit, user]);
+  }, [open, isEdit, user])
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = e => {
+    const file = e.target.files[0]
+    console.log(file)
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result, imageFile: file });
-      };
-      reader.readAsDataURL(file);
+      setFormData(prevFormData => ({ ...prevFormData, image: file }))
     }
-  };
+  }
 
   const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
+    setFormData({ ...formData, [field]: value })
+  }
 
   const validateForm = () => {
     const tempErrors = {
@@ -85,38 +84,67 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
       role: !formData.role,
       department: !formData.departmentId,
       password: !formData.password
-    };
-    setErrors(tempErrors);
-    return !Object.values(tempErrors).includes(true);
-  };
+    }
+    setErrors(tempErrors)
+    return !Object.values(tempErrors).includes(true)
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const uploadImage = async (imagePath, file, token) => {
+    const avatar = new FormData()
+    avatar.append('avatar', file)
+    avatar.append('path', imagePath)
+    avatar.append('s3Path', 'user')
 
-    if (!validateForm()) return;
+    console.log(avatar)
 
-    const findDept = async (id) => {
-      const dept = department.departments.find(dept => dept.id === id);
-      return dept ? dept.name : null;
-    };
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_TEST_API_URL}/upload`, avatar, {
+      headers: {
+        Authorization: `${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  }
 
-    const departmentName = await findDept(formData.departmentId);
-    console.log(departmentName);
+  const handleSubmit = async e => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    const findDept = async id => {
+      const dept = department.departments.find(dept => dept.id === id)
+      return dept ? dept.name : null
+    }
+
+    const departmentName = await findDept(formData.departmentId)
+    console.log(departmentName)
+
+    const data = {
+      ...formData,
+      hospitalId: session.user.hospitalId,
+
+      departmentName: departmentName
+    }
+
+    if (formData.image instanceof File) {
+      try {
+        const image = await uploadImage(formData.filePath, formData.image, session.user.token)
+        console.log(image)
+        data.image = image.data.authUrl
+        data.filePath = image.data.fileUrl
+      } catch (error) {
+        console.error(error)
+        toast.error('Failed to upload image')
+      }
+    }
 
     try {
-      const data = {
-        ...formData,
-        hospitalId: session.user.hospitalId,
-        image: 'sdsd',
-        departmentName: departmentName
-      };
-
-      console.log(data)
+      //console.log(data)
 
       const url = isEdit
         ? `${process.env.NEXT_PUBLIC_TEST_API_URL}/user/${user.id}`
-        : `${process.env.NEXT_PUBLIC_TEST_API_URL}/user`;
-      const method = isEdit ? 'put' : 'post';
+        : `${process.env.NEXT_PUBLIC_TEST_API_URL}/user`
+      const method = isEdit ? 'put' : 'post'
 
       const response = await axios({
         method,
@@ -124,62 +152,64 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
         data,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `${session.user.token}`
-        },
-      });
+          Authorization: `${session.user.token}`
+        }
+      })
 
-      console.log(response.data);
-      onSave();
-      onClose();
+      if (response.data.message === 'User updated successfully') {
+        toast.success('อัพเดตข้อมูลสำเร็จ', {
+          position: 'top-right',
+          autoClose: 5000, // 5 seconds
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: false
+        })
+        onSave()
+        onClose();
+      }
+
+      //console.log(response.data)
+
+      
     } catch (error) {
-      console.error('There was an error uploading the data!', error);
+      console.error('There was an error uploading the data!', error)
     }
-  };
+  }
 
   const roleOptions = [
     { label: 'referDoctor', value: 'referDoctor' },
     { label: 'แพทย์', value: 'doctor' },
     { label: 'พยาบาล', value: 'nurse' }
-  ];
+  ]
 
   return (
-    <Dialog open={open} onClose={(event, reason) => {
-      if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
-        onClose();
-      }
-    }} maxWidth="lg">
-      <DialogTitle>
-        {title}
-      </DialogTitle>
+    <Dialog
+      open={open}
+      onClose={(event, reason) => {
+        if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') {
+          onClose()
+        }
+      }}
+      maxWidth='lg'
+    >
+      <DialogTitle>{title}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent dividers className='gap-4'>
           <Grid container spacing={4}>
-            <Grid item xs={12} display="flex" justifyContent="center">
-              <Avatar
-                src={formData.image}
-                alt={formData.name}
-                sx={{ width: 100, height: 100 }}
-              />
+            <Grid item xs={12} display='flex' justifyContent='center'>
+              <Avatar src={formData.image} alt={formData.name} sx={{ width: 100, height: 100 }} />
             </Grid>
-            <Grid item xs={12} display="flex" justifyContent="center">
-              <Button
-                variant="contained"
-                component="label"
-              >
+            <Grid item xs={12} display='flex' justifyContent='center'>
+              <Button variant='contained' component='label'>
                 Upload Image
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
+                <input type='file' hidden accept='image/*' onChange={handleImageChange} />
               </Button>
             </Grid>
             <Grid item xs={6}>
               <CustomTextField
                 fullWidth
                 id='username'
-                label="ชื่อผู้ใช้"
+                label='ชื่อผู้ใช้'
                 placeholder='ชื่อผู้ใช้'
                 value={formData.username}
                 onChange={e => handleChange('username', e.target.value)}
@@ -190,7 +220,7 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
               <CustomTextField
                 id='name'
                 fullWidth
-                label="ชื่อ-นามสกุล"
+                label='ชื่อ-นามสกุล'
                 placeholder='ชื่อ-นามสกุล'
                 value={formData.name}
                 onChange={e => handleChange('name', e.target.value)}
@@ -201,9 +231,9 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
               <CustomTextField
                 fullWidth
                 id='email'
-                label="อีเมล์"
+                label='อีเมล์'
                 placeholder='อีเมล์'
-                type="email"
+                type='email'
                 value={formData.email}
                 onChange={e => handleChange('email', e.target.value)}
                 error={errors.email}
@@ -211,19 +241,14 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
             </Grid>
             <Grid item xs={6}>
               <CustomAutocomplete
-                id="role"
+                id='role'
                 fullWidth
                 options={roleOptions}
-                getOptionLabel={(option) => option.label}
+                getOptionLabel={option => option.label}
                 value={roleOptions.find(option => option.value === formData.role) || null}
                 onChange={(event, newValue) => handleChange('role', newValue ? newValue.value : '')}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    label="ตำแหน่ง"
-                    placeholder="ตำแหน่ง"
-                    error={errors.role}
-                  />
+                renderInput={params => (
+                  <CustomTextField {...params} label='ตำแหน่ง' placeholder='ตำแหน่ง' error={errors.role} />
                 )}
               />
             </Grid>
@@ -232,7 +257,7 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
                 fullWidth
                 select
                 id='department'
-                label="แผนก / หน่วยงาน"
+                label='แผนก / หน่วยงาน'
                 placeholder='แผนก / หน่วยงาน'
                 value={formData.departmentId}
                 onChange={e => handleChange('departmentId', e.target.value)}
@@ -250,7 +275,7 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
                 id='password'
                 fullWidth
                 type='password'
-                label="รหัสผ่าน"
+                label='รหัสผ่าน'
                 placeholder='รหัสผ่าน'
                 value={formData.password}
                 onChange={e => handleChange('password', e.target.value)}
@@ -259,17 +284,17 @@ const UserSettingModal = ({ title, user, onChange, onSave, open, onClose, isEdit
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions className="gap-2 mt-4">
-          <Button type="submit" variant="outlined" color="primary">
+        <DialogActions className='gap-2 mt-4'>
+          <Button type='submit' variant='outlined' color='primary'>
             บันทึก
           </Button>
-          <Button onClick={onClose} variant="outlined" color="secondary">
+          <Button onClick={onClose} variant='outlined' color='secondary'>
             ยกเลิก
           </Button>
         </DialogActions>
       </form>
     </Dialog>
-  );
-};
+  )
+}
 
-export default UserSettingModal;
+export default UserSettingModal

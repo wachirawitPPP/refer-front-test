@@ -1,6 +1,6 @@
 // Next Imports
 import { NextResponse } from 'next/server'
-
+import cookie from 'cookie'
 // Third-party Imports
 import Negotiator from 'negotiator'
 import { withAuth } from 'next-auth/middleware'
@@ -13,28 +13,28 @@ import { i18n } from '@configs/i18n'
 import { getLocalizedUrl, isUrlMissingLocale } from '@/utils/i18n'
 import { ensurePrefix, withoutSuffix } from '@/utils/string'
 
-// Constants
+let DOCTOR_HOME_PAGE_URL = '/pages/refer'
 const HOME_PAGE_URL = '/dashboards'
+const DOCTOR_NAVIGATION_URL = '/doctor-navigation'
+
+const DOCTOR_RESTRICTED_PATHS = [
+  '/apps/setting/hospital-setting',
+  '/setting/department-setting',
+  '/apps/setting/user-setting',
+  '/dashboards',
+  '/pages/referTable1'
+]
 
 const getLocale = request => {
-  // Try to get locale from URL
   const urlLocale = i18n.locales.find(locale => request.nextUrl.pathname.startsWith(`/${locale}`))
-
   if (urlLocale) return urlLocale
 
-  // Negotiator expects plain object so we need to transform headers
   const negotiatorHeaders = {}
-
   request.headers.forEach((value, key) => (negotiatorHeaders[key] = value))
 
-  // @ts-ignore locales are readonly
   const locales = i18n.locales
-
-  // Use negotiator and intl-localematcher to get best locale
   const languages = new Negotiator({ headers: negotiatorHeaders }).languages(locales)
-  const locale = matchLocale(languages, locales, i18n.defaultLocale)
-
-  return locale
+  return matchLocale(languages, locales, i18n.defaultLocale)
 }
 
 const localizedRedirect = (url, locale, request) => {
@@ -42,13 +42,10 @@ const localizedRedirect = (url, locale, request) => {
   const isLocaleMissing = isUrlMissingLocale(_url)
 
   if (isLocaleMissing) {
-    // e.g. incoming request is /products
-    // The new URL is now /en/products
     _url = getLocalizedUrl(_url, locale ?? i18n.defaultLocale)
   }
 
   let _basePath = process.env.BASEPATH ?? ''
-
   _basePath = _basePath.replace('demo-1', request.headers.get('X-server-header') ?? 'demo-1')
   _url = ensurePrefix(_url, `${_basePath ?? ''}`)
   const redirectUrl = new URL(_url, request.url).toString()
@@ -58,78 +55,79 @@ const localizedRedirect = (url, locale, request) => {
 
 export default withAuth(
   async function middleware(request) {
-    // Get locale from request headers
     const locale = getLocale(request)
     const pathname = request.nextUrl.pathname
+    const searchParams = request.nextUrl.searchParams
+    const cookies = cookie.parse(request.headers.get('cookie') || '')
 
-    // If the user is logged in, `token` will be an object containing the user's details
+    if (searchParams.has('token')) {
+      return NextResponse.next()
+    }
+
     const token = request.nextauth.token
-
-    // Check if the user is logged in
     const isUserLoggedIn = !!token
+    const userRole = token?.role
 
-    // Guest routes (Routes that can be accessed by guest users who are not logged in)
-    const guestRoutes = ['login', 'register', 'forgot-password']
-
-    // Shared routes (Routes that can be accessed by both guest and logged in users)
+    const guestRoutes = ['login', 'authen', 'register', 'forgot-password', 'consult_diag', 'consult_diag_account']
     const sharedRoutes = ['shared-route']
-
-    // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
+    const isLoginAttempt = pathname.endsWith('/login') && isUserLoggedIn
+    
+    if (isLoginAttempt && userRole === 'doctor') {
+      return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+    }
 
-    // If the user is not logged in and is trying to access a private route, redirect to the login page
+
+    if (userRole === 'doctor' && DOCTOR_RESTRICTED_PATHS.some(path => pathname.endsWith(path))) {
+      return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+    }
+
+    
+
     if (!isUserLoggedIn && privateRoute) {
       let redirectUrl = '/login'
-
       if (!(pathname === '/' || pathname === `/${locale}`)) {
         const searchParamsStr = new URLSearchParams({ redirectTo: withoutSuffix(pathname, '/') }).toString()
-
         redirectUrl += `?${searchParamsStr}`
       }
-
       return localizedRedirect(redirectUrl, locale, request)
     }
 
-    // If the user is logged in and is trying to access a guest route, redirect to the root page
+    
     const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
 
     if (isUserLoggedIn && isRequestedRouteIsGuestRoute) {
-      return localizedRedirect(HOME_PAGE_URL, locale, request)
+      if (userRole === 'admin') {
+        return localizedRedirect(HOME_PAGE_URL, locale, request)
+      }
+      if (userRole === 'nurse'|| userRole === 'regist') {
+        //return localizedRedirect('/pages/pending-refer', locale, request)
+        return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+      }
+
+      if (userRole === 'doctor') {
+        return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+      }
     }
 
-    // If the user is logged in and is trying to access root page, redirect to the home page
     if (pathname === '/' || pathname === `/${locale}`) {
-      return localizedRedirect(HOME_PAGE_URL, locale, request)
+      if (userRole === 'admin') return localizedRedirect(HOME_PAGE_URL, locale, request)
+      if (userRole === 'doctor') return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+      if (userRole === 'nurse') return localizedRedirect(DOCTOR_NAVIGATION_URL, locale, request)
+      //if (userRole === 'nurse') return localizedRedirect('/pages/pending-refer', locale, request)
     }
 
-    // If pathname already contains a locale, return next() else redirect with localized URL
     return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
   },
   {
     callbacks: {
-      authorized: () => {
-        // This is a work-around for handling redirect on auth pages.
-        // We return true here so that the middleware function above
-        // is always called.
-        return true
-      }
+      authorized: () => true
     }
   }
 )
 
-// Matcher Config
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - all items inside the public folder
-     *    - images (public images)
-     *    - next.svg (Next.js logo)
-     *    - vercel.svg (Vercel logo)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg).*)'
   ]
 }

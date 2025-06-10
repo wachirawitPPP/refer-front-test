@@ -101,14 +101,14 @@ const Navigation = props => {
       {/* Nav Header including Logo & nav toggle icons  */}
       <NavHeader>
         <Logo />
-        {!(isCollapsed && !isHovered) && (
+        {/* {!(isCollapsed && !isHovered) && (
           <NavCollapseIcons
             lockedIcon={<i className='tabler-circle-dot text-xl' />}
             unlockedIcon={<i className='tabler-circle text-xl' />}
             closeIcon={<i className='tabler-x text-xl' />}
             onClick={() => updateSettings({ layout: !isCollapsed ? 'collapsed' : 'horizontal' })}
           />
-        )}
+        )} */}
       </NavHeader>
       <StyledBoxForShadow ref={shadowRef} />
       <VerticalMenu dictionary={dictionary} scrollMenu={scrollMenu} />

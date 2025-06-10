@@ -2,7 +2,7 @@
   inline-size: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
-  white-space: nowrap;
+  
 
   [align='right'] > * {
     text-align: end;
@@ -17,12 +17,13 @@
     border-block-start: 1px solid var(--border-color);
 
     th {
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.8125rem;
       letter-spacing: 0.2px;
       line-height: 1.8462;
       text-align: start;
       block-size: 56px;
+      white-space: nowrap;
       &:not(:first-of-type):not(:last-of-type) {
         padding-block: 0.5rem;
         padding-inline: 1rem;
@@ -48,9 +49,10 @@
 
     th,
     td {
-      font-size: 0.9375rem;
+      font-size: 0.8375rem;
       line-height: 1.4667;
-      block-size: 50px;
+      block-size: 50px; 
+      white-space: nowrap;
       &:not(:first-of-type):not(:last-of-type) {
         padding-block: 0.5rem;
         padding-inline: 1rem;

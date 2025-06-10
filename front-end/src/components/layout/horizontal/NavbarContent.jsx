@@ -2,7 +2,8 @@
 
 // Third-party Imports
 import classnames from 'classnames'
-
+import { signOut, useSession } from 'next-auth/react'
+import { useEffect, useState, useMemo } from 'react'
 // Component Imports
 import NavToggle from './NavToggle'
 import Logo from '@components/layout/shared/Logo'
@@ -18,98 +19,35 @@ import useHorizontalNav from '@menu/hooks/useHorizontalNav'
 
 // Util Imports
 import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
-
-// Vars
-const shortcuts = [
-  {
-    url: '/apps/calendar',
-    icon: 'tabler-calendar',
-    title: 'Calendar',
-    subtitle: 'Appointments'
-  },
-  {
-    url: '/apps/invoice/list',
-    icon: 'tabler-file-dollar',
-    title: 'Invoice App',
-    subtitle: 'Manage Accounts'
-  },
-  {
-    url: '/apps/user/list',
-    icon: 'tabler-user',
-    title: 'Users',
-    subtitle: 'Manage Users'
-  },
-  {
-    url: '/apps/roles',
-    icon: 'tabler-users-group',
-    title: 'Role Management',
-    subtitle: 'Permissions'
-  },
-  {
-    url: '/',
-    icon: 'tabler-device-desktop-analytics',
-    title: 'Dashboard',
-    subtitle: 'User Dashboard'
-  },
-  {
-    url: '/pages/account-settings',
-    icon: 'tabler-settings',
-    title: 'Settings',
-    subtitle: 'Account Settings'
-  }
-]
-
-const notifications = [
-  {
-    avatarImage: '/images/avatars/8.png',
-    title: 'Congratulations Flora 🎉',
-    subtitle: 'Won the monthly bestseller gold badge',
-    time: '1h ago',
-    read: false
-  },
-  {
-    title: 'Cecilia Becker',
-    avatarColor: 'secondary',
-    subtitle: 'Accepted your connection',
-    time: '12h ago',
-    read: false
-  },
-  {
-    avatarImage: '/images/avatars/3.png',
-    title: 'Bernard Woods',
-    subtitle: 'You have new message from Bernard Woods',
-    time: 'May 18, 8:26 AM',
-    read: true
-  },
-  {
-    avatarIcon: 'tabler-chart-bar',
-    title: 'Monthly report generated',
-    subtitle: 'July month financial report is generated',
-    avatarColor: 'info',
-    time: 'Apr 24, 10:30 AM',
-    read: true
-  },
-  {
-    avatarText: 'MG',
-    title: 'Application has been approved 🚀',
-    subtitle: 'Your Meta Gadgets project application has been approved.',
-    avatarColor: 'success',
-    time: 'Feb 17, 12:17 PM',
-    read: true
-  },
-  {
-    avatarIcon: 'tabler-mail',
-    title: 'New message from Harry',
-    subtitle: 'You have new message from Harry',
-    avatarColor: 'error',
-    time: 'Jan 6, 1:48 PM',
-    read: true
-  }
-]
-
+import axios from 'axios';
+import { useParams, useRouter } from 'next/navigation'
 const NavbarContent = () => {
   // Hooks
   const { isBreakpointReached } = useHorizontalNav()
+  const { data: session } = useSession()
+  const [hospitalname, setHospitalname] = useState('')
+
+  useEffect(() => {
+    const fetchHospitalInfo = async () => {
+      if (session) {
+        try {
+          const hos_id = session?.user?.hospitalId ?? 99999
+          const response = await axios.get(`${process.env.NEXT_PUBLIC_TEST_API_URL}/hospital-info/${hos_id}`, {
+            headers: {
+              Authorization: session.user.token
+            }
+          })
+          setHospitalname(response.data.data.name)
+          console.log('Hospital:', response)
+        } catch (error) {
+          console.error('Failed to fetch hospital info:', error)
+        }
+      }
+    }
+    
+    fetchHospitalInfo()
+  }, [session])
+
 
   return (
     <div
@@ -122,10 +60,23 @@ const NavbarContent = () => {
       </div>
 
       <div className='flex items-center'>
-       
-        <LanguageDropdown />
-        <ModeDropdown />
-        <NotificationsDropdown notifications={notifications} />
+        {/* <LanguageDropdown /> */}
+        {/* <ModeDropdown /> */}
+        {/* <NotificationsDropdown notifications={notifications} /> */}
+        <div className='w-30 flex flex-col items-end text-right'>
+          <p className='text-sm font-medium text-gray-800'>ชื่อผู้ใช้: {session?.user?.name}</p>
+          <div className='flex flex-row '>
+            <p className='text-xs text-gray-500 mr-2'>
+              สิทธิ:{' '}
+              {session?.user?.role === 'doctor'
+                ? 'แพทย์'
+                : session?.user?.role === 'admin'
+                  ? 'admin'
+                  : session?.user?.role === 'nurse' ? 'พยาบาล' : session?.user?.role === 'regist' ? 'ห้องบัตร' : session?.user?.role}
+            </p>
+            <p className='text-xs text-gray-500'>สถานที่: {hospitalname}</p>
+          </div>
+        </div>
         <UserDropdown />
         {/* Language Dropdown, Notification Dropdown, quick access menu dropdown, user dropdown will be placed here */}
       </div>

@@ -1,5 +1,7 @@
+'use client'
 // Third-party Imports
 import classnames from 'classnames'
+import { signOut, useSession } from 'next-auth/react'
 
 // Component Imports
 import NavToggle from './NavToggle'
@@ -102,6 +104,7 @@ const notifications = [
 ]
 
 const NavbarContent = () => {
+  const { data: session } = useSession()
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-4'>
@@ -109,10 +112,18 @@ const NavbarContent = () => {
         <NavSearch /> */}
       </div>
       <div className='flex items-center'>
-        <LanguageDropdown />
+        {/* <LanguageDropdown /> */}
         <ModeDropdown />
         
-        <NotificationsDropdown notifications={notifications} />
+        {/* <NotificationsDropdown notifications={notifications} /> */}
+        <div className='w-28 flex flex-col items-end text-right'>
+          <p className='text-sm font-medium text-gray-800'>{session?.user?.name}</p>
+          <div className='flex flex-row '>
+            <p className='text-xs text-gray-500 mr-2'>{session?.user?.role}</p>
+            <p className='text-xs text-gray-500'>{session?.user?.hospital}</p>
+          </div>
+
+        </div>
         <UserDropdown />
       </div>
     </div>
