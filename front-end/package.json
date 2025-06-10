@@ -4,9 +4,7 @@
   "license": "Commercial",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",
